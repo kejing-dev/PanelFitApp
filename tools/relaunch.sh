@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Reinstall (optional: pass "install"), reset the emulator camera, start the app and wait until it settles,
+# The reset camera looks across the room; the tool window opens straight ahead, specimens go on the arc beside it.
+# The Stage origin is the camera pose at launch: always reset the camera BEFORE starting the app.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DEV=${DEV:-emulator-5560}
+PKG=io.embodit.panelfit
+ADB="${LOCALAPPDATA}/Android/Sdk/platform-tools/adb.exe"
+H="bash $ROOT/tools/harness/emu.sh"
+UIA="$(cygpath -w "$ROOT/tools/harness/uia_cam.ps1")"
+[ "${1:-}" = install ] && "$ADB" -s $DEV install -r "$ROOT/app/build/outputs/apk/debug/app-debug.apk" | tail -1
+MSYS_NO_PATHCONV=1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$UIA" reset -Avd Pico_Emulator_6_1_fresh | tr -d '\r' | head -1
+MSYS_NO_PATHCONV=1 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$UIA" set camera_rotation_button on -Avd Pico_Emulator_6_1_fresh | tr -d '\r' | head -1
+sleep 1
+"$ADB" -s $DEV shell 'for p in $(pm list packages io.embodit | sed s/package://); do [ "$p" != io.embodit.panelfit ] && am force-stop $p; done' # another app's Full Space blocks the start
+for attempt in 1 2; do
+  "$ADB" -s $DEV shell am force-stop $PKG; sleep 3; "$ADB" -s $DEV logcat -c
+  "$ADB" -s $DEV shell am start -n $PKG/.platform.LaunchActivity >/dev/null 2>&1
+  for i in $(seq 1 30); do "$ADB" -s $DEV logcat -d -s PanelFit:V | grep -qE "PF-STATE (S0[1-9]|S1[0-9])" && break; sleep 2; done
+  "$ADB" -s $DEV logcat -d -s PanelFit:V | grep -qE "PF-STATE (S0[1-9]|S1[0-9])" && break
+  echo "stage did not open, retrying"
+done
+"$ADB" -s $DEV logcat -d -s PanelFit:V | grep -E "PF-STATE" | tail -1 | cut -c40-140
+"$ADB" -s $DEV shell "am broadcast -a $PKG.DEBUG -p $PKG --es cmd 'lang=zh'" >/dev/null
+"$ADB" -s $DEV logcat -c; "$ADB" -s $DEV shell "am broadcast -a $PKG.DEBUG -p $PKG --es cmd hmd" >/dev/null
+for i in $(seq 1 10); do L=$("$ADB" -s $DEV logcat -d -s PanelFit:V | grep "CMD head=" | tail -1); [ -n "$L" ] && break; sleep 1; done
+echo "$L" | grep -o "head=.*"

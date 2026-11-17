@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- No runtime permissions (design `container.permissions`): no planes, eyes, hands or camera; the spec card goes
+         to Download/ through MediaStore (own files) or the app's own folder; imports come from the app's own folder. -->
+
+    <application
+        android:name=".platform.SpatialApplication"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PanelFit"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".platform.LaunchActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PanelFit">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- DefaultStage: one Mixed Stage (passthrough) with the specimens (design `container`); the tool panel is a
+                 Planar WindowContainer declared in Main.kt (needs nothing here: factory native-window-move §3.1) -->
+            <meta-data
+                android:name="pico.spatial.stage.id"
+                android:value="PanelFitStage" />
+            <!-- "1": StageStyle.Mixed: the specimens and the real room at full intensity -->
+            <meta-data
+                android:name="pico.spatial.stage.style"
+                android:value="1" />
+            <meta-data
+                android:name="pico.spatial.stage.immersion"
+                android:value="0" />
+            <meta-data
+                android:name="pico.spatial.stage.immersion_min"
+                android:value="0" />
+            <meta-data
+                android:name="pico.spatial.stage.immersion_max"
+                android:value="0" />
+        </activity>
+    </application>
+
+</manifest>

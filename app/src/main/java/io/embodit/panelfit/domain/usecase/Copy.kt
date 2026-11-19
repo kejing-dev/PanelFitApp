@@ -165,6 +165,7 @@ object Copy {
     // S13
     val calib = L("校准", "Calibrate")
     val general = L("通用", "General")
+    val howToTab = L("怎么操作", "How to")
     val setK = L("换算系数", "dp factor")
     val setHigh = L("够大线", "Big enough at")
     val setLow = L("太小线", "Too small below")
@@ -204,6 +205,8 @@ object Copy {
 
     // window chip on the Stage
     val openPanel = L("打开面板", "Open panel")
+    val lookLevel = L("平视前方", "Look straight ahead")
+    val lookLevelSub = L("面板就出来", "and the panel opens")
 
     // specimen content
     val sampleBody = L("这里是两行正文，用 bodyMedium。看看在这个距离读起来累不累。", "Two lines of body text in bodyMedium. See if it is tiring to read from here.")

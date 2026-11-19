@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,6 +30,7 @@ import com.pico.spatial.ui.design.Button
 import com.pico.spatial.ui.design.ButtonDefaults
 import com.pico.spatial.ui.design.Icon
 import com.pico.spatial.ui.design.PicoTheme
+import io.embodit.panelfit.BuildConfig
 import io.embodit.panelfit.R
 import io.embodit.panelfit.domain.model.Language
 import io.embodit.panelfit.domain.model.Layout
@@ -53,6 +55,7 @@ import io.embodit.panelfit.ui.pf.components.IconKey
 import io.embodit.panelfit.ui.pf.components.LocalEnglish
 import io.embodit.panelfit.ui.pf.components.PfText
 import io.embodit.panelfit.ui.pf.components.PfType
+import io.embodit.panelfit.ui.pf.components.RowDivider
 import io.embodit.panelfit.ui.pf.components.Segments
 import io.embodit.panelfit.ui.pf.components.StepperRow
 import io.embodit.panelfit.ui.pf.components.ToggleChip
@@ -84,6 +87,7 @@ internal fun PreparingView() {
 
 @Composable
 internal fun WelcomeView(onEvent: (PfEvent) -> Unit) {
+    // gate:allow button-gap welcome lines stacked top to bottom, one key only ([try one]); no keys side by side
     Column(Modifier.fillMaxWidth().padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         PfText(tr(Copy.welcomeTitle), "welcome.title", PfType.title, lines = 2)
         PfText(tr(Copy.welcomeBody), "welcome.body", PfType.body, lines = 3)
@@ -103,9 +107,9 @@ internal fun WelcomeView(onEvent: (PfEvent) -> Unit) {
 internal fun LibraryPage(state: PfState, onEvent: (PfEvent) -> Unit) {
     val en = LocalEnglish.current
     val cards = Template.entries
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         for (row in 0 until 5) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 for (col in 0 until 2) {
                     val i = row * 2 + col
                     if (i < cards.size) {
@@ -124,8 +128,8 @@ internal fun LibraryPage(state: PfState, onEvent: (PfEvent) -> Unit) {
                             "listButton",
                             Copy.listButton.format(en, state.specimens.size),
                             { onEvent(PfEvent.GoSub(Sub.LIST)) },
-                            modifier = Modifier.width(252.dp),
-                            minWidth = 252.dp,
+                            modifier = Modifier.width(CARD_W),
+                            minWidth = CARD_W,
                             height = 72.dp,
                             iconRes = R.drawable.ic_list,
                         )
@@ -138,13 +142,16 @@ internal fun LibraryPage(state: PfState, onEvent: (PfEvent) -> Unit) {
 
 private fun scaleText(v: Float): String = if (v == 1f) "1" else String.format(Locale.US, "%.2f", v).trimEnd('0')
 
-/** A library card, 252 x 72: name and size line; greyed when six specimens are out (S02:full). */
+/** Library card width: two per row with a 16 dp gap (B31) in the 512 dp column. */
+private val CARD_W = 248.dp
+
+/** A library card, 248 x 72: name and size line; greyed when six specimens are out (S02:full). */
 @Composable
 private fun LibraryCard(name: String, title: String, sub: String, enabled: Boolean, onClick: () -> Unit) {
     Button(
         onClick = { if (enabled) onClick() },
-        modifier = Modifier.width(252.dp).alpha(if (enabled) 1f else 0.45f).probe(name, onClick),
-        size = ButtonDefaults.Regular.copy(height = 72.dp, minWidth = 252.dp),
+        modifier = Modifier.width(CARD_W).alpha(if (enabled) 1f else 0.45f).probe(name, onClick),
+        size = ButtonDefaults.Regular.copy(height = 72.dp, minWidth = CARD_W),
         shape = RoundedCornerShape(16.dp),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = PicoTheme.colorScheme.fillTertiary, contentColor = PicoTheme.colorScheme.labelPrimary),
@@ -163,6 +170,7 @@ private fun LibraryCard(name: String, title: String, sub: String, enabled: Boole
 @Composable
 internal fun ListPage(state: PfState, onEvent: (PfEvent) -> Unit) {
     val en = LocalEnglish.current
+    // gate:allow button-gap list rows stacked top to bottom: rows 56 dp with 48 dp keys, so keys of two rows are 16 dp apart
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (state.specimens.isEmpty()) {
             PfText(Copy.listEmpty(en), "list.empty", PfType.body, lines = 2)
@@ -214,6 +222,7 @@ internal fun ListPage(state: PfState, onEvent: (PfEvent) -> Unit) {
 @Composable
 internal fun ImportPage(state: PfState, onEvent: (PfEvent) -> Unit) {
     val en = LocalEnglish.current
+    // gate:allow button-gap full-width file rows stacked top to bottom (72 dp each), not keys side by side; six must fit the page
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (state.importFiles.isEmpty()) {
             Icon(painter = painterResource(R.drawable.ic_image), contentDescription = null, modifier = Modifier.size(32.dp), tint = PicoTheme.colorScheme.labelPrimary)
@@ -260,6 +269,7 @@ private fun Thumb(name: String) {
 /** S04:none / S07:none / S08:none: one screen for all three pages. */
 @Composable
 internal fun NoneSelected(onEvent: (PfEvent) -> Unit) {
+    // gate:allow button-gap icon, two lines and one key stacked top to bottom; no keys side by side
     Column(Modifier.fillMaxWidth().padding(top = 72.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(painter = painterResource(R.drawable.ic_touch_app), contentDescription = null, modifier = Modifier.size(40.dp), tint = PicoTheme.colorScheme.labelPrimary)
         PfText(tr(Copy.noneTitle), "none.title", PfType.title)
@@ -296,6 +306,7 @@ internal fun AdjustPage(state: PfState, onEvent: (PfEvent) -> Unit) {
     }
     val en = LocalEnglish.current
     val p = sp.pose
+    // gate:allow button-gap stepper rows (48 dp) stacked top to bottom; keys side by side within a row are 132 dp apart (value between)
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         NameDoneRow(state, onEvent)
         if (state.adjustPage == 0) {
@@ -309,8 +320,8 @@ internal fun AdjustPage(state: PfState, onEvent: (PfEvent) -> Unit) {
             StepperRow("tilt", tr(Copy.rowTilt), "${p.tiltDeg.roundToInt()}°", onStep = { onEvent(PfEvent.Step(Field.TILT, it)) }) {
                 WordButton("tilt.toEye", tr(Copy.tiltToEye), { onEvent(PfEvent.TiltToEye) }, minWidth = 72.dp)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val w = (512 - 16) / 3
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                val w = (512 - 32) / 3
                 ToggleChip("overlay.reach", tr(Copy.overlayReach), R.drawable.ic_pan_tool, state.overlays.reach, w.dp) { onEvent(PfEvent.Overlay("reach")) }
                 ToggleChip("overlay.neck", tr(Copy.overlayNeck), R.drawable.ic_accessibility_new, state.overlays.neck, w.dp) { onEvent(PfEvent.Overlay("neck")) }
                 ToggleChip("overlay.ruler", tr(Copy.overlayRuler), R.drawable.ic_straighten, state.overlays.ruler, w.dp) { onEvent(PfEvent.Overlay("ruler")) }
@@ -341,7 +352,7 @@ internal fun RatePage(state: PfState, onEvent: (PfEvent) -> Unit) {
     }
     val en = LocalEnglish.current
     val r = state.readings[sp.id]?.takeIf { state.headOk }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (sp.template.layout == Layout.IMAGE) {
             PfText(sp.name(en), "rate.name", PfType.titleMedium)
             RateRow("rate.whole", Copy.wholeRow(en), null, null, sp.ratings[TypeRoles.WHOLE]?.rating) { onEvent(PfEvent.Rate(TypeRoles.WHOLE, it)) }
@@ -364,6 +375,7 @@ internal fun RatePage(state: PfState, onEvent: (PfEvent) -> Unit) {
 @Composable
 private fun RateRow(name: String, title: String, arc: String?, ref: RefWord?, self: Rating?, onRate: (Rating) -> Unit) {
     val en = LocalEnglish.current
+    // gate:allow button-gap the title line sits above the three keys; the keys themselves are 16 dp apart (row below)
     Column(Modifier.fillMaxWidth().height(96.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(Modifier.height(36.dp), verticalAlignment = Alignment.CenterVertically) {
             PfText(title, "$name.title", PfType.label, Modifier.width(196.dp))
@@ -374,15 +386,15 @@ private fun RateRow(name: String, title: String, arc: String?, ref: RefWord?, se
                 PfText(Copy.refLine.format(en, Copy.ref(ref)(en)), "$name.ref", PfType.small)
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             for ((rating, l) in listOf(Rating.OK to Copy.rateOk, Rating.MEH to Copy.rateMeh, Rating.NO to Copy.rateNo)) {
                 val on = self == rating
                 WordButton(
                     "$name.${rating.name.lowercase(Locale.US)}",
                     l(en),
                     { onRate(rating) },
-                    modifier = Modifier.width(165.dp),
-                    minWidth = 165.dp,
+                    modifier = Modifier.width(160.dp),
+                    minWidth = 160.dp,
                     primary = on,
                     iconRes = if (on) R.drawable.ic_check else null,
                 )
@@ -410,6 +422,7 @@ internal fun CardPage(state: PfState, onEvent: (PfEvent) -> Unit) {
     }
     val en = LocalEnglish.current
     val r = state.readings[sp.id]?.takeIf { state.headOk }
+    // gate:allow button-gap sentence, table rows and the page keys stacked top to bottom; no keys side by side
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (state.cardPage == 0) {
             PfText(if (r != null) SpecText.sentence(en, sp, r) else Copy.noHead(en), "card.sentence", PfType.bodyMedium, Modifier.height(66.dp), lines = 3)
@@ -473,12 +486,28 @@ private fun TableRow(name: String, label: String, value: String, alert: Boolean 
 @Composable
 internal fun SettingsContent(state: PfState, onEvent: (PfEvent) -> Unit, onQuit: () -> Unit) {
     val en = LocalEnglish.current
+    // D26 (2026-11-17 user on the headset: settings opened on Calibrate and [Quit app] sat in General, out of sight):
+    // the segments only switch the middle; recall and quit sit in a footer below it, pinned to the bottom of the page
+    Column(Modifier.fillMaxSize()) {
+        // gate:allow tabs-segment options inside the one settings page (pages themselves switch on the native TabBar); quit and recall stay below it
+        Segments("settingsPage", listOf(Copy.calib(en), Copy.general(en), Copy.howToTab(en)), state.settingsPage, { onEvent(PfEvent.SettingsPage(it)) }, width = W)
+        Spacer(Modifier.height(8.dp))
+        Column(Modifier.weight(1f)) { SettingsSegment(state, onEvent) }
+        RowDivider(W)
+        Spacer(Modifier.height(8.dp))
+        SettingsFooter(state, onEvent, onQuit)
+    }
+}
+
+/** The middle of the settings page: the open segment (calibrate / general / how to). */
+@Composable
+private fun SettingsSegment(state: PfState, onEvent: (PfEvent) -> Unit) {
+    val en = LocalEnglish.current
     val st = state.settings
     fun set(next: io.embodit.panelfit.domain.model.PfSettings) = onEvent(PfEvent.Settings(next))
-    Column {
-        Segments("settingsPage", listOf(Copy.calib(en), Copy.general(en)), state.settingsPage, { onEvent(PfEvent.SettingsPage(it)) }, width = W)
-        Spacer(Modifier.height(8.dp))
-        if (state.settingsPage == 0) {
+    // gate:allow exit-first-page [Quit app] is in SettingsFooter, outside this when and below every segment (SettingsContent)
+    when (state.settingsPage) {
+        0 -> {
             StepperRow("set.k", Copy.setK(en), "${Copy.f2(st.k)} mm/dp", labelWidth = SET_LABEL_W, onStep = { set(st.copy(k = round2(st.k + it * 0.01f).coerceIn(0.3f, 2f))) })
             StepperRow("set.high", Copy.setHigh(en), "${st.refHigh.roundToInt()}′", labelWidth = SET_LABEL_W, onStep = { set(st.copy(refHigh = (st.refHigh + it).coerceIn(st.refLow + 1f, 60f))) })
             StepperRow("set.low", Copy.setLow(en), "${st.refLow.roundToInt()}′", labelWidth = SET_LABEL_W, onStep = { set(st.copy(refLow = (st.refLow + it).coerceIn(4f, st.refHigh - 1f))) })
@@ -495,7 +524,9 @@ internal fun SettingsContent(state: PfState, onEvent: (PfEvent) -> Unit, onQuit:
                 Segments("set.posture", listOf(Copy.stand(en), Copy.sit(en)), if (st.posture == Posture.STAND) 0 else 1, { set(st.copy(posture = if (it == 0) Posture.STAND else Posture.SIT)) }, width = 160.dp)
             }
             PfText(Copy.howCalib(en), "set.how", PfType.small, lines = 3, color = PicoTheme.colorScheme.labelSecondary)
-        } else {
+        }
+        2 -> HowToSegment(en)
+        else -> {
             SwitchRow("set.frames", Copy.setFrames(en), st.frames) { set(st.copy(frames = it)) }
             SwitchRow("set.sound", Copy.sound(en), st.sound) { set(st.copy(sound = it)) }
             Row(Modifier.height(48.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -506,7 +537,6 @@ internal fun SettingsContent(state: PfState, onEvent: (PfEvent) -> Unit, onQuit:
                 PfText(Copy.setLanguage(en), "set.lang.label", PfType.body, Modifier.weight(1f))
                 Segments("set.lang", listOf("中文", "EN"), if (st.language == Language.ZH) 0 else 1, { onEvent(PfEvent.Lang(if (it == 0) Language.ZH else Language.EN)) }, width = 160.dp)
             }
-            ActionRow("set.recall", Copy.setRecall(en), Copy.recall(en), R.drawable.ic_open_in_new) { onEvent(PfEvent.RecallWindow) }
             ActionRow("set.front", Copy.setAllFront(en), Copy.allFront(en), R.drawable.ic_my_location) { onEvent(PfEvent.AllToFront) }
             if (state.confirm == Confirm.CLEAR) {
                 Row(Modifier.fillMaxWidth().height(48.dp).probe("clear.confirm"), verticalAlignment = Alignment.CenterVertically) {
@@ -519,25 +549,77 @@ internal fun SettingsContent(state: PfState, onEvent: (PfEvent) -> Unit, onQuit:
                 ActionRow("set.clear", Copy.setClear(en), Copy.clear(en), R.drawable.ic_delete) { onEvent(PfEvent.Ask(Confirm.CLEAR)) }
             }
             Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-                PfText(Copy.setAbout(en) + " · v0.1.0", "set.about", PfType.body, Modifier.weight(1f))
+                PfText(Copy.setAbout(en) + " · v" + BuildConfig.VERSION_NAME, "set.about", PfType.body, Modifier.weight(1f))
                 WordButton("set.welcome", Copy.showWelcome(en), { onEvent(PfEvent.ShowWelcome) }, minWidth = 96.dp)
             }
-            QuitRow(
-                label = Copy.quitRow(en),
-                ask = Copy.quitAsk(en),
-                cancel = Copy.cancel(en),
-                quit = Copy.quit(en),
-                note = Copy.quitNote(en),
-                confirming = state.confirm == Confirm.QUIT,
-                onAsk = { onEvent(PfEvent.Ask(if (it) Confirm.QUIT else null)) },
-                onQuit = {
-                    onEvent(PfEvent.QuitYes)
-                    onQuit()
-                },
-            )
         }
     }
 }
+
+/** The settings footer, on screen whatever segment is open (D26 / D44): [recall tool panel] and [quit app]. */
+@Composable
+private fun SettingsFooter(state: PfState, onEvent: (PfEvent) -> Unit, onQuit: () -> Unit) {
+    val en = LocalEnglish.current
+    QuitRow(
+        label = Copy.quitRow(en),
+        ask = Copy.quitAsk(en),
+        cancel = Copy.cancel(en),
+        quit = Copy.quit(en),
+        note = Copy.quitNote(en),
+        confirming = state.confirm == Confirm.QUIT,
+        onAsk = { onEvent(PfEvent.Ask(if (it) Confirm.QUIT else null)) },
+        onQuit = {
+            onEvent(PfEvent.QuitYes)
+            onQuit()
+        },
+        recall = { WordButton("set.recall", Copy.setRecall(en), { onEvent(PfEvent.RecallWindow) }, iconRes = R.drawable.ic_open_in_new, minWidth = 200.dp, height = FOOTER_KEY_H) },
+    )
+}
+
+/**
+ * "怎么操作" (B19): one row per main action, an icon, what to do with the hand and with the controller. The words are
+ * string resources (how_to_*), read in the app's own language (it can differ from the system's).
+ */
+@Composable
+private fun HowToSegment(en: Boolean) {
+    val res = localized(en)
+    val rows =
+        listOf(
+            Triple(R.drawable.ic_dashboard, R.string.how_to_add, R.array.how_to_add_ways),
+            Triple(R.drawable.ic_touch_app, R.string.how_to_select, R.array.how_to_select_ways),
+            Triple(R.drawable.ic_open_with, R.string.how_to_move, R.array.how_to_move_ways),
+            Triple(R.drawable.ic_tune, R.string.how_to_turn, R.array.how_to_turn_ways),
+            Triple(R.drawable.ic_visibility, R.string.how_to_rate, R.array.how_to_rate_ways),
+        )
+    Column {
+        for ((i, row) in rows.withIndex()) {
+            val (icon, title, ways) = row
+            val (hand, pad) = res.getStringArray(ways).let { it[0] to it[1] }
+            Row(Modifier.fillMaxWidth().height(HOW_TO_ROW_H), verticalAlignment = Alignment.CenterVertically) {
+                Icon(painter = painterResource(icon), contentDescription = null, modifier = Modifier.size(24.dp), tint = PicoTheme.colorScheme.labelPrimary)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    PfText(res.getString(title), "howto.$i.title", PfType.label)
+                    PfText(hand, "howto.$i.hand", PfType.small, color = PicoTheme.colorScheme.labelSecondary)
+                    PfText(pad, "howto.$i.pad", PfType.small, color = PicoTheme.colorScheme.labelSecondary)
+                }
+            }
+        }
+    }
+}
+
+/** Resources in the app's language (settings), not the system's. */
+@Composable
+private fun localized(en: Boolean): android.content.res.Resources {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    return remember(context, en) {
+        val config = android.content.res.Configuration(context.resources.configuration)
+        config.setLocale(if (en) Locale.ENGLISH else Locale.SIMPLIFIED_CHINESE)
+        context.createConfigurationContext(config).resources
+    }
+}
+
+private val HOW_TO_ROW_H = 68.dp
 
 @Composable
 private fun SwitchRow(name: String, label: String, on: Boolean, onChange: (Boolean) -> Unit) {

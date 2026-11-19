@@ -20,6 +20,12 @@ object PfShared {
     val viewModel: PfViewModel
         get() = vm ?: synchronized(this) { vm ?: PfViewModel(PfGraph.store, PfGraph.files).also { vm = it } }
 
+    /** D9 (native-window-move §7.9): every window open waits here until the head is level; the Stage feeds it. */
+    val levelGate = io.embodit.panelfit.domain.usecase.LevelGate()
+
+    /** The Stage's "平视前方" card is wanted (a window open waits and the head is tilted). */
+    var levelHint by mutableStateOf(false)
+
     /** Last lifecycle event the window reported ("never" until it first opens). */
     var window by mutableStateOf("never")
         private set

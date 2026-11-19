@@ -90,7 +90,7 @@ class PfViewModel(private val store: PfStore, private val files: PfFiles) {
             is PfEvent.AdjustPage -> s.copy(adjustPage = e.index.coerceIn(0, 1))
             is PfEvent.CardPage -> s.copy(cardPage = e.index.coerceIn(0, 1))
             is PfEvent.RateGroup -> s.copy(rateGroup = e.index.coerceIn(0, 4))
-            is PfEvent.SettingsPage -> s.copy(settingsPage = e.index.coerceIn(0, 1), confirm = null)
+            is PfEvent.SettingsPage -> s.copy(settingsPage = e.index.coerceIn(0, 2), confirm = null)
             PfEvent.TryOne -> PfReducer.add(s, Template.T1)
             is PfEvent.Select -> PfReducer.select(s, e.id).let { if (e.id != null && it.page == Page.LIBRARY && it.sub == Sub.NONE) it.copy(page = Page.ADJUST) else it }
             PfEvent.Done -> PfReducer.done(s)
@@ -107,7 +107,15 @@ class PfViewModel(private val store: PfStore, private val files: PfFiles) {
             is PfEvent.MoveOutOfWindow -> PfReducer.moveOutOfWindow(s, e.id)
             is PfEvent.Settings -> PfReducer.settings(s, e.settings)
             is PfEvent.Lang -> PfReducer.settings(s, s.settings.copy(language = e.language))
-            is PfEvent.Ask -> PfReducer.confirm(s, e.confirm).let { if (e.confirm != null) it.copy(page = Page.SETTINGS, settingsPage = 1) else it }
+            // the quit confirmation is in the settings footer, on every segment; clearing confirms in General
+            is PfEvent.Ask ->
+                PfReducer.confirm(s, e.confirm).let {
+                    when (e.confirm) {
+                        null -> it
+                        Confirm.CLEAR -> it.copy(page = Page.SETTINGS, settingsPage = 1)
+                        else -> it.copy(page = Page.SETTINGS)
+                    }
+                }
             PfEvent.ClearAll -> PfReducer.clearAll(s)
             PfEvent.QuitYes -> {
                 persistNow(s)

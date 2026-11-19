@@ -89,10 +89,12 @@ fun SpecimenPanel(sp: Specimen, selected: Boolean, inView: Boolean, faded: Boole
 
 @Composable
 private fun Generic(sp: Specimen, en: Boolean) {
+    // gate:allow button-gap specimen content: a sample of a real panel drawn at PICO defaults to judge its size; nothing here can be pressed
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(sp.name(en), style = PicoTheme.typography.titleMedium, color = PicoTheme.colorScheme.labelPrimary, maxLines = 1)
         Text(Copy.sampleBody(en), style = PicoTheme.typography.bodyMedium, color = PicoTheme.colorScheme.labelPrimary, maxLines = 2)
         SampleSegments(en)
+        // gate:allow button-gap specimen content: a sample of a real panel drawn at PICO defaults to judge its size; nothing here can be pressed
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SampleButton(Copy.cancel(en), primary = false)
             SampleButton(Copy.ok(en), primary = true)
@@ -103,10 +105,12 @@ private fun Generic(sp: Specimen, en: Boolean) {
 
 @Composable
 private fun Dialog(en: Boolean) {
+    // gate:allow button-gap specimen content: a sample of a real panel drawn at PICO defaults to judge its size; nothing here can be pressed
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(Copy.dialogTitle(en), style = PicoTheme.typography.titleMedium, color = PicoTheme.colorScheme.labelPrimary, maxLines = 1)
         Text(Copy.dialogBody(en), style = PicoTheme.typography.bodyMedium, color = PicoTheme.colorScheme.labelPrimary, maxLines = 2)
         Spacer(Modifier.weight(1f))
+        // gate:allow button-gap specimen content: a sample of a real panel drawn at PICO defaults to judge its size; nothing here can be pressed
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SampleButton(Copy.cancel(en), primary = false, modifier = Modifier.weight(1f))
             SampleButton(Copy.ok(en), primary = true, modifier = Modifier.weight(1f))
@@ -121,6 +125,7 @@ private fun SampleButton(text: String, primary: Boolean, modifier: Modifier = Mo
     Button(
         onClick = {},
         modifier = modifier,
+        // gate:allow button-height sample button in a specimen: PICO's default Regular 48 dp, shown as it is; onClick does nothing
         size = ButtonDefaults.Regular.copy(height = 48.dp, minWidth = 96.dp),
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content),
@@ -193,6 +198,7 @@ fun styleOf(role: String): TextStyle {
 @Composable
 private fun Components(en: Boolean) {
     var on by remember { mutableStateOf(true) }
+    // gate:allow button-gap specimen content: a sample of a real panel drawn at PICO defaults to judge its size; nothing here can be pressed
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(if (en) "Components" else "组件", style = PicoTheme.typography.titleMedium, color = PicoTheme.colorScheme.labelPrimary, maxLines = 1)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -245,6 +251,17 @@ fun SizeLabel(line1: String, line2: String, alert: Boolean, modifier: Modifier =
 fun OpenPanelChip(text: String, onClick: () -> Unit) {
     Box(Modifier.size(220.dp, 64.dp).clip(RoundedCornerShape(32.dp)).backgroundMaterial(enable = true, style = Material.Regular), contentAlignment = Alignment.Center) {
         WordButton("openPanel", text, onClick, primary = true, iconRes = R.drawable.ic_open_in_new, minWidth = 200.dp)
+    }
+}
+
+/** D9: the Stage card while a window open waits for a level head (same slot and size as [OpenPanelChip]). */
+@Composable
+fun LevelCard(title: String, sub: String) {
+    Box(Modifier.size(220.dp, 64.dp).clip(RoundedCornerShape(32.dp)).backgroundMaterial(enable = true, style = Material.Regular), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            PfText(title, "level.title", PfType.label)
+            PfText(sub, "level.sub", PfType.small)
+        }
     }
 }
 

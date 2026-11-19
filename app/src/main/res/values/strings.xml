@@ -1,4 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Panel Fit</string>
+
+    <!-- Settings · How to (B19): one row per main action; ways = [hand, controller] -->
+    <string name="how_to_add">Add a panel</string>
+    <string-array name="how_to_add_ways">
+        <item>Hand: look at a card in Library, pinch</item>
+        <item>Controller: point at the card, pull the trigger</item>
+    </string-array>
+    <string name="how_to_select">Pick a panel</string>
+    <string-array name="how_to_select_ways">
+        <item>Hand: look at the panel or its size tag, pinch</item>
+        <item>Controller: point at it, pull the trigger</item>
+    </string-array>
+    <string name="how_to_move">Move it</string>
+    <string-array name="how_to_move_ways">
+        <item>Hand: pinch the size tag and drag, drop near a dashed frame to snap</item>
+        <item>Controller: point at the size tag, hold the trigger and move</item>
+    </string-array>
+    <string name="how_to_turn">Turn it, push it away, pull it closer</string>
+    <string-array name="how_to_turn_ways">
+        <item>Hand: Adjust page, tap − / + on each row</item>
+        <item>Controller: stick left/right turns, forward/back pushes and pulls</item>
+    </string-array>
+    <string name="how_to_rate">Can you read it?</string>
+    <string-array name="how_to_rate_ways">
+        <item>Hand: on the Legibility page, pinch Clear / Barely / Can\'t read</item>
+        <item>Controller: point at the same keys, pull the trigger</item>
+    </string-array>
 </resources>

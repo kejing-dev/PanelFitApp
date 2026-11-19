@@ -41,7 +41,7 @@ import kotlin.math.sin
  * - `fill6`, `deleteAll`, `blocked --ei on 1|0`, `quit`, `quitYes`, `lang zh|en`, `recall`, `front`
  * - `step --es f dist|height|side|facing|tilt|width|heightDp|scale --ei d 1|-1`, `surface glass|solid`, `tiltToEye`
  * - `page library|adjust|rate|card|settings|list|import`, `adjustPage 0|1`, `cardPage 0|1`, `group 0..4`,
- *   `settingsPage 0|1`
+ *   `settingsPage 0|1|2` (calibrate / general / how to)
  * - `state <S00..S19>[:variant]` (S02:full, S04:none, S07:none, S08:none, S13b:quit, S13b:clear, S15:error):
  *   straight to a designed state through the same events; real sensing is frozen unless `--ei live 1`
  * - `ui <control>`                              presses a window / panel control by its probe name

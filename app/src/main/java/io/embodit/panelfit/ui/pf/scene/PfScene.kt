@@ -356,7 +356,7 @@ class PfScene(private val sink: (PfEvent) -> Unit) : PfProbe.SceneProbe {
         if (anchor != null) {
             stickFrame(state, now, dt)
             placeSpecimens(state, anchor, view)
-            placeChip(state, anchor)
+            placeChip(state, anchor, view)
             overlaysFrame(state, anchor, view)
         }
         view?.let { rig?.stowBehind(ViewPose(it.position, it.rotation)) }
@@ -370,6 +370,13 @@ class PfScene(private val sink: (PfEvent) -> Unit) : PfProbe.SceneProbe {
     }
 
     private fun viewPose(): HeadPose? = override ?: head
+
+    /** Milliseconds since the Stage's last frame, or null before its first (the window level gate's watchdog). */
+    fun frameAgeMs(now: Long): Long? = if (lastFrameMs == 0L) null else now - lastFrameMs
+
+    /** Head pitch for the window level gate, degrees (+ up); null while there is no valid head pose yet. */
+    fun levelPitchDeg(): Float? =
+        viewPose()?.forward?.y?.coerceIn(-1f, 1f)?.let { Math.toDegrees(kotlin.math.asin(it.toDouble())).toFloat() }
 
     /**
      * Head pose. The first frames can be all zero or the identity at the Stage origin (factory lesson): a pose counts
@@ -727,9 +734,21 @@ class PfScene(private val sink: (PfEvent) -> Unit) : PfProbe.SceneProbe {
             else -> sp.pose
         }
 
-    /** "打开面板": while the tool window is closed, low and ahead of the body (0.8 m, 28 degrees below the eye). */
-    private fun placeChip(state: PfState, anchor: BodyAnchor) {
+    /**
+     * "打开面板": while the tool window is closed, low and ahead of the body (0.8 m, 28 degrees below the eye). While a
+     * window open waits for a level head (D9) the same slot is the "平视前方" card, on the line of sight (pitch clamped
+     * to ±40°, 0.75 m), upright and turned by yaw only.
+     */
+    private fun placeChip(state: PfState, anchor: BodyAnchor, view: HeadPose?) {
         val slot = rig?.get(CHIP) ?: return
+        if (PfShared.levelHint && view != null) {
+            val f = view.forward
+            val yaw = kotlin.math.atan2(-f.x, -f.z)
+            val pitch = kotlin.math.asin(f.y.coerceIn(-1f, 1f)).coerceIn(-LEVEL_CARD_PITCH, LEVEL_CARD_PITCH)
+            val dir = Vec3(-kotlin.math.sin(yaw) * kotlin.math.cos(pitch), kotlin.math.sin(pitch), -kotlin.math.cos(yaw) * kotlin.math.cos(pitch))
+            slot.place(view.position + dir * LEVEL_CARD_M, PanelFacing(yaw, 0f).rotation, 0.75f)
+            return
+        }
         // also when the window never came up (8 s after the head was ready): the app must stay operable
         val now = SystemClock.elapsedRealtime()
         val show = state.phase != Phase.PREPARING && !PfShared.windowOpen && (PfShared.window != "never" || (readySent && now - readyMs > CHIP_FALLBACK_MS))
@@ -896,6 +915,8 @@ class PfScene(private val sink: (PfEvent) -> Unit) : PfProbe.SceneProbe {
         const val LABEL_W = 320f
         const val LABEL_H = 64f
         const val CHIP_W = 220f
+        private const val LEVEL_CARD_M = 0.75f
+        private val LEVEL_CARD_PITCH = Math.toRadians(40.0).toFloat()
         const val CHIP_H = 64f
         const val LABEL_SCALE_PER_M = 0.75f
         const val LABEL_GAP_PER_M = 0.03f

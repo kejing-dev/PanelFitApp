@@ -104,32 +104,39 @@ fun MainWindow(
 
 const val SETTINGS = "settings"
 
-/** Content area of every page, dp (design: 484). */
-const val CONTENT_H = 492
+/**
+ * Content area of every page, dp (design: 484; 528 since v0.1.1 for the settings footer: 16 + 48 header + 528 + 56 hint +
+ * 24 = 672 of the 680 dp window).
+ */
+const val CONTENT_H = 528
 
 /**
- * D26: the last row of the settings page. The confirmation replaces the row in place (no second panel):
- * "退出面板试衣间？[取消] [退出]".
+ * D26: the settings footer, below every segment. [recall] (D44) sits left, [quit app] right; the confirmation replaces
+ * the row in place (no second panel): "退出面板试衣间？[取消] [退出]". Keys 64 dp (B31).
  */
 @Composable
-fun QuitRow(label: String, ask: String, cancel: String, quit: String, note: String, confirming: Boolean, onAsk: (Boolean) -> Unit, onQuit: () -> Unit) {
+fun QuitRow(label: String, ask: String, cancel: String, quit: String, note: String, confirming: Boolean, onAsk: (Boolean) -> Unit, onQuit: () -> Unit, recall: @Composable () -> Unit) {
     if (!confirming) {
-        Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
-            PfText(label, "quit.label", PfType.body, Modifier.weight(1f))
-            WordButton("quit", quit, { onAsk(true) }, iconRes = io.embodit.panelfit.R.drawable.ic_logout)
+        Row(Modifier.fillMaxWidth().height(FOOTER_KEY_H).probe("quit.row"), verticalAlignment = Alignment.CenterVertically) {
+            recall()
+            Box(Modifier.weight(1f))
+            WordButton("quit", label, { onAsk(true) }, iconRes = io.embodit.panelfit.R.drawable.ic_logout, minWidth = 160.dp, height = FOOTER_KEY_H)
         }
     } else {
-        Row(Modifier.fillMaxWidth().height(48.dp).probe("quit.confirm"), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth().height(FOOTER_KEY_H).probe("quit.confirm"), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 PfText(ask, "quit.ask", PfType.body)
                 PfText(note, "quit.note", PfType.small)
             }
-            WordButton("quit.cancel", cancel, { onAsk(false) }, minWidth = 80.dp)
-            Box(Modifier.width(8.dp))
-            WordButton("quit.yes", quit, onQuit, danger = true, minWidth = 80.dp)
+            WordButton("quit.cancel", cancel, { onAsk(false) }, minWidth = 96.dp, height = FOOTER_KEY_H)
+            Box(Modifier.width(16.dp))
+            WordButton("quit.yes", quit, onQuit, danger = true, minWidth = 96.dp, height = FOOTER_KEY_H)
         }
     }
 }
+
+/** Height of the settings footer's keys, dp (B31: 64). */
+val FOOTER_KEY_H = 64.dp
 
 /** D26 exit: release, close the window and the Stage, remove every task, then end the process. */
 suspend fun exitApp(context: Context, navigator: SpatialNavigator, windowId: String, windowTag: String, onExit: () -> Unit) {

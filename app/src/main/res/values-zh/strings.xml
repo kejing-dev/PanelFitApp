@@ -1,4 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">面板试衣间</string>
+
+    <!-- 设置 · 怎么操作（B19）：每个主动作一行；ways = [手势, 手柄] -->
+    <string name="how_to_add">加一块面板</string>
+    <string-array name="how_to_add_ways">
+        <item>手势：看着面板库里的卡，捏一下</item>
+        <item>手柄：射线指着卡，按扳机</item>
+    </string-array>
+    <string name="how_to_select">选中面板</string>
+    <string-array name="how_to_select_ways">
+        <item>手势：看着面板或它的尺寸标签，捏一下</item>
+        <item>手柄：射线指着它，按扳机</item>
+    </string-array>
+    <string name="how_to_move">挪位置</string>
+    <string-array name="how_to_move_ways">
+        <item>手势：捏住尺寸标签拖，放到虚线框附近会吸进去</item>
+        <item>手柄：指着尺寸标签，按住扳机移动</item>
+    </string-array>
+    <string name="how_to_turn">转向、推远、拉近</string>
+    <string-array name="how_to_turn_ways">
+        <item>手势：在调节页点每行的 − / +</item>
+        <item>手柄：摇杆左右转，前后推远拉近</item>
+    </string-array>
+    <string name="how_to_rate">看得清吗</string>
+    <string-array name="how_to_rate_ways">
+        <item>手势：在「看得清吗」页捏 看得清 / 勉强 / 看不清</item>
+        <item>手柄：射线指着同样的键，按扳机</item>
+    </string-array>
 </resources>

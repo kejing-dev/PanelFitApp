@@ -230,7 +230,7 @@ internal fun ToggleChip(name: String, text: String, iconRes: Int, on: Boolean, w
     Button(
         onClick = onClick,
         modifier = Modifier.width(width).probe(name, onClick),
-        size = ButtonDefaults.Regular.copy(height = 48.dp, minWidth = width),
+        size = ButtonDefaults.Regular.copy(height = 64.dp, minWidth = width),
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content),
         contentPadding = PaddingValues(horizontal = 8.dp),

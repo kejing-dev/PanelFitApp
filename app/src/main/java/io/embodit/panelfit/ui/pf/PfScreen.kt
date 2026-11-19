@@ -40,6 +40,7 @@ import io.embodit.panelfit.domain.usecase.TypeRole
 import io.embodit.panelfit.domain.usecase.TypeRoles
 import io.embodit.panelfit.platform.PfGraph
 import io.embodit.panelfit.platform.PfLog
+import io.embodit.panelfit.ui.pf.components.LevelCard
 import io.embodit.panelfit.ui.pf.components.LocalEnglish
 import io.embodit.panelfit.ui.pf.components.OpenPanelChip
 import io.embodit.panelfit.ui.pf.components.SizeLabel
@@ -96,16 +97,57 @@ fun PfScreen() {
     }
 
     // the tool window opens with the Stage; "recall" = close, wait for ON_DESTROY, open (native-window-move §3.5)
+    // D9 (native-window-move §7.9): the system opens the window square to the line of sight, pitch included, so every
+    // open (first, chip, recall) is only asked for here and happens once the head is level (PfShared.levelGate)
     var recallPending by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        PfLog.i("WINDOW open request")
+    val gate = PfShared.levelGate
+    fun openNow(why: String) {
+        PfShared.levelHint = false
+        PfLog.i("WINDOW open why=$why")
         runCatching { navigator.openWindowContainer(PfShared.WINDOW_ID, PfShared.WINDOW_TAG, null) }.onFailure { PfLog.e("WINDOW open failed: $it", it) }
     }
+    fun askWindow(why: String) {
+        PfLog.i("WINDOW open request why=$why")
+        gate.ask(why, android.os.SystemClock.elapsedRealtime())
+    }
+    LaunchedEffect(Unit) { askWindow("start") }
     LaunchedEffect(PfShared.window) {
         if (recallPending && PfShared.window == "ON_DESTROY") {
             recallPending = false
-            PfLog.i("WINDOW recall: reopen")
-            runCatching { navigator.openWindowContainer(PfShared.WINDOW_ID, PfShared.WINDOW_TAG, null) }
+            askWindow("recall")
+        }
+    }
+    LaunchedEffect(gate) {
+        var lastHint = false
+        while (true) {
+            delay(LEVEL_STEP_MS)
+            if (!gate.waiting) continue
+            val now = android.os.SystemClock.elapsedRealtime()
+            // fed only while the Stage runs frames (its first frame comes ~6 s after launch on the headset); without
+            // frames the window opens after 15 s, or 3 s after they stop, so it is never held back for good
+            val age = scene.frameAgeMs(now)
+            if (age == null || age > LEVEL_FRAME_MS) {
+                val stalled = if (age == null) gate.waitedMs(now) > LEVEL_NO_STAGE_MS else age > LEVEL_STALL_MS
+                val why = gate.pending
+                if (stalled && why != null) {
+                    gate.cancel()
+                    lastHint = false
+                    openNow("$why/noframes")
+                }
+                continue
+            }
+            // the Stage's head: validated (not the all-zero first samples) and the debug head override applies
+            val pitch = scene.levelPitchDeg()
+            val hint = gate.hintWanted(pitch)
+            if (hint != lastHint) PfLog.i("LEVEL hint=$hint pitch=${pitch?.let { PfLog.f(it) }}")
+            lastHint = hint
+            PfShared.levelHint = hint
+            // no valid head pose for 5 s (tracking not up): the gate opens anyway, a window is better than none
+            val why = gate.step(now, pitch)
+            if (why != null) {
+                lastHint = false
+                openNow(why)
+            }
         }
     }
 
@@ -153,16 +195,19 @@ fun PfScreen() {
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
-                PfEffect.OpenWindow -> runCatching { navigator.openWindowContainer(PfShared.WINDOW_ID, PfShared.WINDOW_TAG, null) }
+                PfEffect.OpenWindow -> askWindow("chip")
                 PfEffect.RecallWindow ->
                     if (PfShared.window == "ON_DESTROY" || PfShared.window == "never") {
-                        runCatching { navigator.openWindowContainer(PfShared.WINDOW_ID, PfShared.WINDOW_TAG, null) }
+                        askWindow("recall")
                     } else {
                         recallPending = true
                         PfLog.i("WINDOW recall: close")
                         runCatching { navigator.closeWindowContainer(PfShared.WINDOW_ID, PfShared.WINDOW_TAG) }
                     }
-                PfEffect.Exit -> launch { exitApp(context, navigator, PfShared.WINDOW_ID, PfShared.WINDOW_TAG) { PfGraph.head.stop(); PfGraph.controller.stop() } }
+                PfEffect.Exit -> launch {
+                    gate.cancel()
+                    exitApp(context, navigator, PfShared.WINDOW_ID, PfShared.WINDOW_TAG) { PfGraph.head.stop(); PfGraph.controller.stop() }
+                }
                 is PfEffect.Sound ->
                     runCatching {
                         when (effect.kind) {
@@ -211,6 +256,7 @@ private fun PfStage(state: PfState, scene: PfScene, onEvent: (PfEvent) -> Unit) 
                         onDragEnd = { scene.onLabelGesture("end", Vec3.ZERO) },
                         onDragCancel = { scene.onLabelGesture("cancel", Vec3.ZERO) },
                     ) { value ->
+                        // gate:allow drag-delta the per-event increment is summed in PfScene.onLabelGesture (dragTotalPx += amountPx, zeroed on "start"), same as board-input DragTotal
                         val a = value.dragAmount
                         scene.onLabelGesture("move", Vec3(a.x, a.y, a.z))
                     }
@@ -220,7 +266,10 @@ private fun PfStage(state: PfState, scene: PfScene, onEvent: (PfEvent) -> Unit) 
                 when {
                     k == PfScene.CHIP ->
                         AttachmentPanel(k) {
-                            Pooled(k, scene, state.english) { inView -> if (inView) OpenPanelChip(tr(Copy.openPanel)) { onEvent(PfEvent.RecallWindow) } }
+                            Pooled(k, scene, state.english) { inView ->
+                                if (inView && PfShared.levelHint) LevelCard(tr(Copy.lookLevel), tr(Copy.lookLevelSub))
+                                else if (inView) OpenPanelChip(tr(Copy.openPanel)) { onEvent(PfEvent.RecallWindow) }
+                            }
                         }
                     k.startsWith(PfScene.LABEL) ->
                         AttachmentPanel(k) {
@@ -320,3 +369,9 @@ private fun Pooled(key: String, scene: PfScene, english: Boolean, content: @Comp
 }
 
 private val REFRESH_STEPS_MS = longArrayOf(1_500L, 2_500L, 4_000L)
+
+/** How often the level gate is fed (it needs 300 ms of a level head), and its watchdog on the Stage's frames. */
+private const val LEVEL_STEP_MS = 50L
+private const val LEVEL_FRAME_MS = 500L
+private const val LEVEL_STALL_MS = 3_000L
+private const val LEVEL_NO_STAGE_MS = 15_000L
